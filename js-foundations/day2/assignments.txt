@@ -1,0 +1,96 @@
+SECTION A — Concepts (5 questions)
+
+Q1). Explain exactly why this prints "object" even though it clearly fails?
+-> It will not print "object", it will print "number". and why number? bcoz it is the output which
+we got from a numeric process or we can say it is the result of a numeric operation. We get NaN when
+the numerical operation fails
+
+Q.2) Why is this dangerous? 
+let x = "5";
+let y = 10;
+console.log(x + y);
+
+ANS = Because we are trying to add a number and a string value, and in such cases, JS assumes by default
+that maybe a user wants to concat this string, so if either of the operand is a string, JS consider it as 
+a concatination not addition. Doing this can result in unexpected outcomes and bugs
+
+Q.3) Tell me the difference between soft copy vs hard copy in one single sentence each.
+ANS = in Soft copies, when we change the element in any one of the array, it will reflect in the copy or in the og array.
+Whereas in hard copies, both the arrays are independent, changes doesnt reflect.
+
+
+SECTION B — Write code (5 tasks) :- 
+
+Task 1 — HARD COPY
+
+Make a hard copy of this array:-
+
+ANS = const nums = [1,2,3]
+const hardCopy = [...nums]
+console.log(hardCopy);
+
+
+Task 2 — REMOVE last item of array
+
+Remove the last item of:-
+
+ANS = let arr = ["a", "b", "c", "d"];
+let lastItem = arr.pop();
+console.log(lastItem);
+
+Task 3 — Check empty array
+
+Write an if condition that prints "empty" if array is empty, else "not empty". :- 
+
+ANS = let newArr = [];
+
+if (newArr.length == 0) {
+  console.log("Array is empty");
+} else {
+  console.log("Array not is empty");
+}
+
+Task 4 — Check username uniqueness
+
+Given :-
+
+ANS = const u1 = "salman09";
+const u2 = "salman09";
+
+if(u1 === u2){
+    console.log("Duplicate");
+} else {
+    console.log("OK");
+}
+
+
+Task 5 — Merging
+
+Merge these two arrays properly :-
+
+ANS = 
+let a = ["tokyo", "rome"];
+let b = ["delhi", "paris"];
+
+let c = [...a, ...b]
+console.log(c);
+
+
+SECTION C — Edge case brain test (2 tricky ones)
+
+Q4). What will this print? And why?
+console.log(1 + true);
+
+ANS = this will print 2. JS will do implicit conversion of true -> 1. Since the numerical representation of
+true is 1, so that is why we get 1 by converting true. Then 1 + 1 = 2.
+
+
+Q5). Predict output:-
+
+let arr = [];
+let copy = arr;
+copy.push(10);
+console.log(arr.length);
+
+ANS = output will be 1. Because we created soft copy here which allows modifications in both the arrays even if we made changes in any one array.
+
