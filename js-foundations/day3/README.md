@@ -1,61 +1,30 @@
-.
+# Day 3 — Loops & Iteration
 
-📘 Day 3 — Loops & Iteration (JS Foundations)
-Topics Covered
+### Concepts I learned
+- while, do…while, and for loops
+- for…of (arrays, strings, iterables)
+- for…in (object keys, why it’s unsafe for arrays)
+- forEach and why it cannot break
+- Loop control: break vs continue
+- Off-by-one errors (i < length vs i <= length)
+- When to use which loop
 
-while loop
+### Files included
+- loops.js
+- assignments.txt
 
-do…while loop
+### Challenges solved
+- Reverse a string manually
+- Filter even numbers (no filter())
+- Count number of true values
+- Extract keys with values > 50
+- Stop loop on first negative
+- break / continue loop challenges
+- for…of, for…in, forEach challenges
 
-for loop
-
-for…of (iterating iterables)
-
-for…in (iterating object keys)
-
-forEach
-
-break & continue flow control
-
-Real-world loop challenges
-
-Concept Checks
-
-Difference between for…of vs for…in
-
-Why forEach cannot use break
-
-Advantage of do…while over while
-
-Common off-by-one mistake (i <= arr.length)
-
-Why for…in is dangerous on arrays
-
-Coding Tasks Completed
-
-Filter even numbers without .filter()
-
-Reverse a string manually
-
-Count boolean true values
-
-Extract keys with values > 50 from an object
-
-Stop reading array on first negative number
-
-All solutions are inside:
-
-js-foundations/day3/tasks.js
-js-foundations/day3/assignments.txt
-
-What I Learned
-
-When to use each loop type
-
-Why implicit iteration (for…of, forEach) is safer for arrays
-
-Why control keywords matter (break, continue)
-
-How object iteration differs from array iteration
-
-How to think in "iteration patterns" instead of just syntax
+### Notes
+- for…in returns string indexes & can traverse prototype → not ideal for arrays
+- forEach cannot break because callback isn’t the loop
+- do…while runs at least once before checking condition
+- Always use i < arr.length (avoid <=)
+- Prefer for…of for clean array traversal
