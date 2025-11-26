@@ -1,0 +1,118 @@
+SECTION A — Concept Checks (5 questions)
+
+Q1. What is the exact difference between for…of and for…in?
+ANS = for…of is used to iterate over arrays,string,iterables. for…in is used to iterate over object keys, array indexes as strings
+
+Q2. Why does forEach NOT allow break?
+ANS = forEach uses a callback function, and the loop itself is not in your control.
+You can’t break out because the callback is not the loop — it’s just a function call executed by the loop internally
+
+Q3. What is the main advantage of a do…while loop over a while loop?
+ANS = do…while loop executes the task atleast once ,then it checks the condition, whereas while loop first checks the condition then executes the block of code.
+
+Q4. What happens if you write this? 
+for (let i = 0; i <= arr.length; i++) { ... }
+
+ANS = It will give us undefined since i <= arr.length, it will try to extract the value of the index which doesnt exist
+
+Q5. Why is this wrong?
+for (const key in arr) {
+    console.log(arr[key]);
+}
+ANS = for in loop iterates over index in case of arrays not the elements, and it also accesses the prototypes also, so it would result in unexpected errors.
+
+SECTION B — Coding Tasks (Real-World Logic)
+Task 1 — Filter Even Numbers (Without using filter())
+
+Write a loop that takes :-
+
+ANS = 
+const nums = [11, 20, 3, 42, 55, 60];
+const filteredNums = [];
+
+for (const num of nums) {
+    if(num % 2 == 0){
+        filteredNums.push(num)
+    }
+}
+
+console.log(filteredNums);
+
+
+Task 2 — Reverse a string using a loop
+
+ANS = let str = "backend";
+let reversedStr = "";
+
+let j = str.length - 1;
+for (let i = str.length - 1; i >= 0; i--) {
+  reversedStr = reversedStr + str.charAt(i);
+}
+
+console.log(reversedStr);
+
+
+Task 3 — Count how many true values in an array
+
+ANS = const flags = [true, false, true, true, false, false, true];
+let count = 0;
+
+for (const flag of flags) {
+    if(flag === true){
+        count++;
+    }
+}
+
+console.log(count);
+
+Task 4 — Return object keys whose values are > 50
+
+ANS = const scores = {
+  math: 91,
+  english: 45,
+  science: 67,
+  history: 30,
+};
+
+let higherScores = [];
+
+for (const score in scores) {
+  console.log(scores[score]);
+  if (scores[score] > 50) {
+    higherScores.push(score);
+  }
+}
+
+console.log(higherScores);
+
+Task 5 — Stop on first negative number
+
+ANS = let data = [4, 7, 12, -1, 9, 10];
+let beforeNegative = [];
+
+for (const num of data) {
+  if (num < 0) {
+    break;
+  }
+  beforeNegative.push(num);
+}
+
+console.log(beforeNegative);
+
+SECTION C — Edge Case Brainers (Hard)
+
+Q6. Predict output:-
+for (var i = 0; i < 3; i++) {}
+console.log(i);
+
+ANS = The output will be 3. Because the variable created using var keyword is accessible outside the scope.
+
+Q7. Predict output:
+
+let arr = [1, 2, 3, 4];
+for (const idx in arr) {
+    if (idx == 2) continue;
+    console.log(idx);
+}
+
+ANS = output will be 0,1,3
