@@ -1,0 +1,207 @@
+✅ SECTION A — Concept Questions (5, very sharp)
+
+Answer each in 2–3 lines max, no stories.
+
+Q1). Why can’t arrow functions be used as methods inside objects when you need to access this?
+
+=> Because this behaves differently with arrow functions. In arrow functions, this points to the lexical scope not its own scope.
+   because arrow functions dont have this by default, js engine in case of arrow functions look at the place where they were created and then 
+decides the this.
+
+Q2). What is the difference between:
+
+return {
+   name: "salman"
+}
+
+
+and
+
+() => ({ name: "salman" })
+
+
+Explain the technical reason.
+In JavaScript, curly braces { } are used for two things:
+
+A Block of Code: Like inside an if statement or a loop.
+
+An Object Literal: Like { name: "salman" }.
+
+The Problem Scenario
+If you write this:
+
+JavaScript
+
+const getUser = () => { name: "salman" }; 
+// Returns: undefined
+JavaScript sees the { after the arrow => and thinks: "Aha! This is a block of code (a function body)!"
+
+It enters the block.
+
+It sees name: "salman". (It treats name: as a label, which is valid but useless code here).
+
+It hits the closing }.
+
+It realizes: "Wait, you never wrote the word return."
+
+Result: It returns undefined.
+
+2. The Fix: The "Magic" Parentheses ()
+To fix this, we wrap the object in parentheses:
+
+JavaScript
+
+const getUser = () => ({ name: "salman" });
+// Returns: { name: "salman" }
+Why does this work? In JavaScript, parentheses () are used to group expressions (values). You cannot put a "Block of Code" inside parentheses like that.
+
+So, when the JavaScript engine sees ( { ... } ):
+
+It knows ( cannot contain a code block.
+
+Therefore, the { MUST be an Object.
+
+Because it's an Arrow Function, if there is no code block, it implicitly returns whatever value is there.
+
+
+Q3) .What exactly is a Closure? Explain without using the word “remember”.
+
+=> This concept is often considered the "most magical" part of JavaScript, but it is actually a very strict rule about memory.
+
+Here is the breakdown of that definition.
+
+1. The "Lexical Environment" (The Backpack)
+The definition says: "A closure is a function bundled with its lexical environment."
+
+Lexical Environment: This is just a fancy way of saying "Where I was born."
+
+Bundled: This means the function takes a "snapshot" of the variables around it when it is created.
+
+The Analogy: Imagine a function is a Hiker. When the Hiker prepares to leave their house (the Outer Function), they pack a Backpack. They put everything they might need from the house (variables) into that backpack.
+
+When the Hiker leaves the house, they take the backpack with them.
+
+2. The "Magic" (Defying Death)
+The definition says: "That lets the inner function access those outer-scope variables even after the outer function has finished executing."
+
+Usually, in JavaScript, when a function finishes running, its local variables are destroyed (Garbage Collected). They are gone forever. Closures break this rule.
+
+
+Q4) .In this code, how many execution contexts are created, and in what order?
+function outer() {
+  function inner() {
+    return 10;
+  }
+  return inner();
+}
+
+outer();
+
+=> Global context is created, then When the outer() is called, outer context is created, then inside outer() when inner is called, one more inner context is created
+
+Q5). Why is this not a higher-order function?
+function test(x) {
+  return x + 1;
+}
+
+=> Because when a function takes another function as a parameter, that is called as higher-order function.
+Here this function is taking a variable as a parameter not a function.
+
+✅ SECTION B — Coding Tasks (5 real-world exercises)
+
+Write short, clean solutions.
+
+/* Task 1 — Custom map() (HOF)
+
+Build your own version of map() called myMap */
+
+let arr = [1, 2, 3];
+
+function myMap(arr, fn) {
+  return fn(arr);
+}
+
+myMap(arr, function (num) {
+  for (const el of arr) {
+    return el * 3;
+  }
+});
+
+/* Task 2 — secureCounter (Closure)
+
+Write a function that returns another function that increments a private counter, but the counter cannot be accessed directly. */
+
+function secureCounter() {
+  let count = 0;
+  return function() {
+    count += 1;
+    return count;
+  };
+}
+
+const c = secureCounter();
+console.log(c()); 
+console.log(c());
+
+/* Task 3 — Convert any function into an arrow function (proper implicit return)
+
+Convert: */
+
+const multiply = (a, b) => a * b;
+
+console.log(multiply(2, 2));
+
+/*  Task 4 — Create a function that logs THIS correctly
+
+Write an object with a method that prints its own name using correct this usage (regular function, not arrow). */
+
+const user = {
+  name: "Hitesh",
+  printName: function() {
+    console.log(this.name);
+  }
+};
+
+user.printName(); 
+
+
+/*  Task 5 — HOF returning functions
+
+Write a function createMultiplier(n) that returns another function which multiplies any number by n. */
+
+function createMultiplier(a) {
+  return function mult(b) {
+    return a * b;
+  };
+}
+
+const double = createMultiplier(2)
+console.log(double(4))
+
+✅ SECTION C — Brain Crushers (2 tough ones)
+Q6. Predict output and explain precisely.
+
+let count = 10;
+
+const func = () => {
+  console.log(count);
+  let count = 5;
+};
+
+func();
+
+=> It will throw reference error that count is not defined. because we are trying to access count before its initialization.
+
+Q7. Predict output:
+function a(x) {
+  return function(y) {
+    return function(z) {
+      return x + y + z;
+    }
+  }
+}
+
+console.log(a(1)(2)(3));
+
+=> output = 6
+
