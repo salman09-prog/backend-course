@@ -5,14 +5,19 @@ Build your own version of map() called myMap */
 let arr = [1, 2, 3];
 
 function myMap(arr, fn) {
-  return fn(arr);
+  const result = [];
+  for (const el of arr) {
+    result.push(fn(el));
+  }
+  return result;
 }
 
-myMap(arr, function (num) {
-  for (const el of arr) {
-    return el * 3;
-  }
+const output = myMap(arr, function (num) {
+  return num * 3;
 });
+
+console.log(output); // [3, 6, 9]
+
 
 /* Task 2 — secureCounter (Closure)
 
@@ -20,14 +25,16 @@ Write a function that returns another function that increments a private counter
 
 function secureCounter() {
   let count = 0;
-  return function increaseCount() {
+  return function () {
     count++;
-    console.log(count);
+    return count;
   };
 }
 
-c = secureCounter();
-c();
+const c = secureCounter();
+console.log(c()); // 1
+console.log(c()); // 2
+
 
 /* Task 3 — Convert any function into an arrow function (proper implicit return)
 
@@ -42,12 +49,13 @@ console.log(multiply(2, 2));
 Write an object with a method that prints its own name using correct this usage (regular function, not arrow). */
 
 const username = {
-  printName: function (name) {
-    console.log(name);
-  },
+  name: "Salman",
+  printName: function () {
+    console.log(this.name);
+  }
 };
 
-username.printName("Salman");
+username.printName(); // Salman
 
 /*  Task 5 — HOF returning functions
 

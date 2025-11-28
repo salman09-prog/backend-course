@@ -49,7 +49,7 @@ Result: It returns undefined.
 2. The Fix: The "Magic" Parentheses ()
 To fix this, we wrap the object in parentheses:
 
-JavaScript
+JavaScript :- 
 
 const getUser = () => ({ name: "salman" });
 // Returns: { name: "salman" }
@@ -87,7 +87,7 @@ The definition says: "That lets the inner function access those outer-scope vari
 Usually, in JavaScript, when a function finishes running, its local variables are destroyed (Garbage Collected). They are gone forever. Closures break this rule.
 
 
-Q4) .In this code, how many execution contexts are created, and in what order?
+Q4). In this code, how many execution contexts are created, and in what order?
 function outer() {
   function inner() {
     return 10;
