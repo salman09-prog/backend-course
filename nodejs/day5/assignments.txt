@@ -1,0 +1,175 @@
+✅ SECTION A — Concept Checks (6 questions, sharp & strict)
+
+Give 2–3 line answers MAX. No fluff.
+
+Q1). Why is Node.js NOT a framework or a library?
+Explain using correct technical terms, not generic phrases.
+
+ANS = Node.js is a Runtime Environment, not a Framework.
+
+The Difference:
+
+A Runtime (Node.js) is like a Kitchen. It provides the environment (stove, oven, water, electricity) required to actually cook (execute) the raw food (JavaScript code). Without the runtime, the code is just text that sits there doing nothing. It provides the infrastructure: The V8 Engine, C++ Bindings, and OS capabilities.
+
+A Framework (Express, NestJS) is like a Recipe Book. It provides a structured way to cook specific dishes (features) using the tools provided by the kitchen. It gives you pre-written code and rules to build applications faster.
+
+Key Takeaway: You can write an app without a Framework, but you cannot run it without a Runtime. Node.js is the place where your code lives and breathes outside the browser.
+
+
+Q2). Explain the exact roles of V8 and libuv inside Node.js.
+What does each one handle?
+
+ANS = 
+Node.js relies on two main powerhouses to function:
+
+V8 Engine (The Brain):
+
+Developed by Google (used in Chrome).
+
+Role: It takes your JavaScript code and compiles it directly into Machine Code (binary) that your computer's processor understands.
+
+What it handles: It executes all Synchronous (blocking) JavaScript code (math, variable assignments, logic).
+
+Libuv (The Hands):
+
+A C++ library built specifically for Node.js.
+
+Role: It handles the "heavy lifting" and background tasks. It implements the Event Loop and the Thread Pool.
+
+What it handles: All Asynchronous tasks (reading files, database queries, network requests, timers).
+
+Summary: V8 executes the JavaScript; when V8 sees a heavy task (like reading a file), it hands it off to Libuv so V8 can keep working on other things.
+
+
+Q3). Why does alert() work in Chrome but not in Node.js?
+Give the exact name of the concept that explains the difference.
+
+ANS = because in javascript, there are many things, functionalitites and features which are not the part of JS.
+      JS gets those things from web APIs & browser. Node.js provides us the core JS functionality and top of that
+      many extra features such as file handling.  So alert() method is also not the part of the core JS, it is provided
+      to JS by browser, since node.js job is to run JS outside of the browser,we dont have access to alert(), because we are
+      outside of the browser and it works in chrome bcoz that time we try to run js inside of the browser and browser is the only thing
+      which has provided this alert() to JS.
+
+Q4). What is the purpose of package.json vs package-lock.json?
+Explain the difference in one sharp sentence each.
+
+ANS = package.json: Declares what dependencies your project requests.
+
+package-lock.json: Locks the exact versions actually installed (including sub-dependencies).
+
+Q.5). Why should node_modules NEVER be pushed to GitHub?
+Explain the real reason, not “because it's heavy”.
+
+ANS =  The node_modules folder is a Generated Artifact. It can be 100% recreated simply by running npm install. Your package.json and package-lock.json are the blueprints; node_modules is just the building.
+
+Q6) .Node 18+ has built-in fetch().
+Then why do old courses still install axios?
+Give a real technical reason.
+
+ANS = Even tough fetch() is native to node 18+ and above versions, axios is still conevience and provides better
+error handling. When you get the data using fetch() method, u have to manualy convert it into json using await "await res.json()",
+however axios() automatically does this conversion. While using fetch(), you manually have to define so many extra things like headers, method, and more,
+whereas axios() makes these things describing simple
+
+
+✅ SECTION B — Coding Tasks (5 real-world Node basics)
+
+Write clean, minimal, correct Node code.
+
+Task 1 — Create a file named hello.js that logs the current OS platform.
+
+(Hint: use the built-in Node os module)
+
+CODE = const os = require('os')
+const currentOS = os.platform()
+console.log(currentOS);
+
+
+Task 2 — Write a tiny script sum.js that takes 2 numbers from CLI arguments and prints their sum.
+
+Example:
+node sum.js 5 7 → 12
+
+CODE = const [, , a, b] = process.argv;
+console.log(Number(a) + Number(b));
+
+
+
+Task 3 — Create a script delay.js that prints "Start", waits 2 seconds, then prints "End".
+
+Use Node’s timer APIs.
+
+CODE = console.log("Start");
+
+setTimeout(() => {
+  console.log("End");
+}, 2000);
+
+
+
+
+
+Task 4 — Write a script that reads a file named data.txt and prints its contents.
+
+Use the built-in fs module.
+
+CODE = 
+const fs = require('fs');
+
+const content = fs.readFileSync("data.txt","utf-8");
+console.log(content);
+
+
+
+Task 5 — Write a script server.js that starts a very basic HTTP server on port 3000 and returns "Hello Node".
+
+(No frameworks)
+
+ANS = const http = require('http');
+
+const server = http.createServer((req, res) => {
+  res.end("Hello Node");
+});
+
+server.listen(3000);
+
+
+
+✅ SECTION C — Brain Crushers (2 tough ones)
+
+Explain clearly and predict exact output.
+
+Q7. Output? Explain precisely.
+console.log(globalThis === global);
+
+ANS = True, because the globalThis is a universal variable which points to the global object based on where the JS is running.
+Now in node.js js is running, and node.js's top-level-object is global object, so globalThis is pointing to global only that is
+why they are equal.
+
+
+
+Q8. Output? Explain precisely.
+console.log(this);
+
+
+Run this exact code in:
+a) Node REPL
+b) Node inside a .js file
+
+Give both outputs.
+
+a) Node REPL
+
+=> global object. The Context is REPL: You are running this in the Read-Eval-Print Loop (the interactive shell you get when you type just node in your terminal).
+
+REPL Scope: In the Node.js REPL, the environment is designed to act like a browser console. When you are at the top level of the REPL, you are operating in the Global Scope.
+
+The Binding: Therefore, inside the REPL, this is strictly equal to the global object.
+
+ANS = b) Node inside a .js file
+-> It will print {}, bcoz this points to  current environment, but specifically, in a Node.js file, that environment is The Module, not the Global scope.
+When you run a file like node script.js, Node does not just run your code naked. It wraps your entire code inside a hidden function before executing it.
+When Node calls this wrapper function, it sets the this keyword to be equal to module.exports.
+
+Since a new file has no exports yet, module.exports starts as an empty object {}. Therefore, this is {}.
