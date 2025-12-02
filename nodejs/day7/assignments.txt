@@ -1,0 +1,93 @@
+SECTION A — Concept Questions (5 total)
+
+Answer each in 2–3 lines.
+
+Q.1) Why are EventEmitter callbacks executed synchronously, even though Node.js is event-driven?
+
+ANS = "Node.js is event-driven regarding System I/O (like reading files or network requests) to avoid blocking the CPU.
+However, the EventEmitter class is designed for Code Organization, not parallelism. It runs synchronously to guarantee Logic 
+Consistency. When I emit an event, I need to be 100% sure that all listeners have finished their work (like updating a variable) 
+before my code moves to the next line. This prevents Race Conditions."
+
+
+Q.2) EventEmitter follows the Observer / Pub-Sub pattern.
+     Explain what that means in 2–3 lines.
+    
+ANS =
+"It is a design pattern that decouples the code into Publishers (who generate data) and Subscribers (who want to react to it).
+
+In Node.js, the `EventEmitter` acts as the central hub: when an event is emitted (Published), the class looks up its internal registry and broadcasts the signal, automatically executing all registered listeners (Subscribers)."
+
+
+Q.3) What happens when an EventEmitter emits an event that has no listeners?
+And what is the one special exception?
+
+ANS = "For almost all events, nothing happens. The emit method simply returns false and the code moves on. It is non-blocking and safe.
+
+However, there is one special exception: the 'error' event. If emit('error') is called and there is no listener registered for it, Node.js will throw the error, resulting in a crash (process exit). This is why we must always set up an .on('error') listener."
+
+Q.4) At what listener count does Node.js warn about potential memory leaks?
+Explain why this warning exists.
+
+ANS = "By default, Node.js throws a warning if more than 10 listeners are added to a single event.
+
+Why this warning exists: It acts as a safety mechanism to prevent Memory Leaks. In many cases, having more than 10 listeners for the same event indicates a coding error—usually that the developer is adding listeners inside a loop or a repeated function call (like a request handler) but forgetting to remove them (.removeListener).
+
+If we legitimately need more than 10 (e.g., a chat app with 50 users), we can manually increase this limit using myEmitter.setMaxListeners(20)."
+
+Q.5) Why is EventEmitter powerful for building real-time systems?
+Give two real reasons (not generic statements).
+
+ANS = EventEmitter is powerful for real-time systems because:
+
+1. Decoupling (Modularity): It allows us to separate the 'Business Logic' from the 'Side Effects'.
+
+Example: When a user registers, the registration module just emits 'userRegistered'. It doesn't need to know how to send an email or how to update the analytics dashboard. Those distinct modules simply listen for the event. This prevents 'Spaghetti Code'.
+
+2. Bridging Asynchronous I/O: It acts as the standard interface between Node’s non-blocking background workers (Libuv) and the main thread. This allows the server to handle thousands of concurrent connections (like a chat app) by simply reacting to events rather than waiting for each task to finish one by one
+
+
+Here are the completed tasks based on the practical implementation of Node.js Events.
+
+### ✅ SECTION B — Coding Tasks
+
+#### Task 1 — Logger with Events
+Design Description:
+I extended the `EventEmitter` class to create a `Logger` that emits a `'log'` event for messages and an `'error'` event for failures. One listener prints the message to the console, while a second listener uses `fs.appendFile` to persist the data to a `logs.txt` file. I ensured safety by explicitly registering a listener on the `'error'` event, preventing the Node.js process from crashing if a write operation fails.
+
+#### Task 2 — Multi-Listener Order
+Execution & Reason:
+The listeners executed sequentially in the exact order they were registered (Top-to-Bottom) in the code. This is because `.emit()` synchronously iterates through the internal listener array and runs each function one by one, waiting for the previous one to finish.
+
+#### Task 3 — File Events
+Emission & Metadata:
+Inside the asynchronous `fs` callbacks, I manually triggered `.emit('file-read')` or `.emit('file-written')` upon success, and `.emit('fs-error')` inside the error block. The metadata passed was an object containing context: `{ filename: 'data.txt', timestamp: new Date(), size: stats.size }`.
+
+
+### 🔥 SECTION C — Brain Crushers
+
+#### Q6. Predict output and explain why:
+
+Output:
+
+```text
+Start
+A
+B
+End
+```
+
+Explanation:
+Node.js EventEmitters are Synchronous.
+
+1.  `Start` prints.
+2.  `emit('ping')` executes the first listener, printing `A`.
+3.  Inside that listener, `emit('pong')` is called, which immediately pauses the current function to execute the 'pong' listener (printing `B`).
+4.  Only after 'pong' returns does the 'ping' listener finish, allowing the script to finally reach `End`.
+
+#### Q7. Why can EventEmitter-based systems accidentally create memory leaks?
+
+Exact Cause:
+An EventEmitter internally maintains a registry (array) of listener functions. A memory leak occurs when you repeatedly add listeners (using `.on()`)—usually inside a loop or a request handler—without ever removing them (using `.off()` or `.removeListener()`).
+
+Because the EventEmitter object itself remains active/alive, it holds a strong reference to every function in that array. This prevents the JavaScript Garbage Collector from cleaning them up, causing the array (and RAM usage) to grow infinitely until the app crashes.
