@@ -1,0 +1,192 @@
+SECTION A — Concept Questions (5 total)
+
+Answer each in 2–3 lines max.
+
+Q1). In Node.js, why does setTimeout(fn, 0) NOT execute immediately even with 0ms delay?
+Explain the event loop phase responsible.
+
+ANS = It does not execute immediately because of the Call Stack rules.
+
+When setTimeout is called, it is handed off to the Node.js API (Timer mechanism).
+
+Even with a 0ms delay, the callback is immediately moved to the Callback Queue (specifically the Timers Phase queue).
+
+The Rule: The Event Loop cannot push anything from the Queue to the Stack until the Call Stack is completely empty.
+
+Therefore, setTimeout must wait for all the synchronous code (the current execution context) to finish before it gets a chance to run.
+
+
+Q.2) Which types of operations are handled by the Thread Pool?
+Give two concrete examples from Node’s built-in modules.
+
+ANS = The Thread Pool (managed by Libuv) handles operations that are "expensive" or cannot be handled asynchronously by the Operating System kernel. These primarily include:
+
+File System APIs: Because file I/O is hard to do asynchronously on some OS kernels.
+
+Cryptography (CPU-intensive): Hashing and encryption tasks.
+
+Compression: Zlib operations.
+
+DNS Lookups: specifically dns.lookup().
+
+Concrete Examples:
+
+fs Module: fs.readFile() (Reading a file).
+
+crypto Module: crypto.pbkdf2() (Hashing a password).
+
+Q.3) What is the difference between:
+
+Event Loop
+
+Callback Queue (a.k.a. Task Queue)
+
+Explain in 2 lines.
+
+ANS = Callback Queue: A holding area where callbacks (from async operations) wait in line after their background task is finished.
+
+Event Loop: A continuous process that checks if the Call Stack is empty; if it is, it takes the first item from the Callback Queue and pushes it onto the Stack.
+
+
+Q.4) Predict the exact output order of this code and explain why:
+console.log("A");
+
+setTimeout(() => console.log("B"), 0);
+
+Promise.resolve().then(() => console.log("C"));
+
+console.log("D");
+
+ANS = output order :- A,D,C,B.
+reason = console.log("A"):
+
+Synchronous. Pushed to Stack, executed, popped.
+
+Output: A
+
+setTimeout(..., 0):
+
+It is a Macrotask (Timer).
+
+Node API starts the timer (0ms).
+
+The callback moves to the Callback Queue (Macrotask Queue).
+
+Promise.resolve().then(...):
+
+It is a Microtask.
+
+The .then() callback is pushed directly into the Microtask Queue.
+
+Critical Rule: The Event Loop always empties the Microtask Queue completely before it even looks at the Callback Queue.
+
+console.log("D"):
+
+Synchronous. Pushed to Stack, executed, popped.
+
+Output: D
+
+The Grand Finale (Event Loop takes over):
+
+The Call Stack is now empty.
+
+Priority Check: Event Loop checks Microtask Queue first. Is there anything? Yes, "C".
+
+Execute Microtask: Pushes "C" to Stack. Output: C.
+
+Microtask Queue is empty. Now check Callback Queue. Is there anything? Yes, "B".
+
+Execute Macrotask: Pushes "B" to Stack. Output: B.
+
+
+Q.5) True or False — and explain:
+
+“Every asynchronous operation in Node.js uses the thread pool.”
+
+ANS = False :- Thread pool handles the heavy async tasks like file I/O, DNS lookup,Cryptography. Other async
+operations uses Node API
+
+
+ ✅ SECTION B — Coding Tasks
+
+ Task 1 — Mixed Async Execution Order
+
+The Script:
+
+```javascript
+const fs = require('fs');
+
+console.log("1. Start");
+
+// 1. Thread Pool Task
+fs.readFile(__filename, () => {
+  console.log("5. File Read (I/O)");
+});
+
+// 2. Timer Task
+setTimeout(() => {
+  console.log("4. Timeout (Timer)");
+}, 0);
+
+// 3. Microtask
+Promise.resolve().then(() => {
+  console.log("3. Promise (Microtask)");
+});
+
+// 4. CPU Blocker (Freezes everything for 3 seconds)
+const start = Date.now();
+while(Date.now() - start < 3000) {} 
+
+console.log("2. End");
+```
+
+Execution Order:
+`1. Start` → `2. End` → `3. Promise` → `4. Timeout` → `5. File Read`
+
+Reasoning:
+
+1.  Sync Code: "Start" prints. The `while` loop blocks the Main Thread (Call Stack) for 3 seconds. The "End" prints immediately after the loop finishes.
+2.  Microtasks (Highest Priority): Once the stack is empty (after 3 seconds), Node must empty the Microtask queue first. The `Promise` runs.
+3.  Timers: Next, the Event Loop moves to the Timers Phase. Since 3 seconds passed, the 0ms timer is definitely ready.
+4.  I/O (Thread Pool): Finally, the Event Loop checks the Poll Phase. The file read (handled by the Thread Pool) is complete, so its callback runs.
+
+-----
+
+ Task 2 — Explain Your Execution Diagram
+
+Explanation:
+While the CPU was blocked for 3 seconds by the `while` loop, the Event Loop was completely frozen and couldn't process anything.
+However, in the background, Libuv's Thread Pool successfully read the file and the Timer expired, queuing their callbacks.
+Once the CPU became free, the Event Loop followed its strict priority rules: it flushed the Microtask Queue (Promise) first, then visited the Timer Queue, and finally executed the I/O callback from the Poll phase.
+
+-----
+
+ Task 3 — Why sync FS destroys servers
+
+Explanation:
+Node.js uses a Single Thread to handle all client requests. If you use `readFileSync` in a route, that single thread stops working to wait for the hard drive.
+During that split second (or longer), 0 other users can connect or receive responses, effectively "hanging" the entire server for everyone until that one file is read.
+
+
+Here are the answers to your "Brain Crusher" section.
+
+ Q6. Predict output:
+
+Output: `1`, `4`, `3`, `2`
+
+Explanation:
+1.  Sync Code First: `1` prints. Then, the `while` loop blocks the Call Stack for 2 seconds (freezing the app). Finally, `4` prints.
+2.  Queues Wait: During the freeze, the Timer (0ms) and Promise moved to their queues, but the Event Loop was stuck waiting for the Stack to clear.
+3.  Priority Rules: Once the stack clears (after `4`), the Event Loop runs Microtasks (`3`) before Macrotasks (`2`).
+
+> 🔥 Pro Catch: Technically, the code `while (Date.now() < Date.now() + 2000)` is an infinite loop (because `T < T + 2000` is always true). The output would actually just be `1` and then a crash. I assumed you intended a standard "sleep" loop for the sake of the logic test!
+
+---
+
+ Q7. Explain this behavior:
+
+Answer:
+Location, Location, Location.
+ Async I/O is delegated outside the Main Thread (to the OS Kernel or Libuv Thread Pool), so the Main Thread is free to keep working.
+ Synchronous CPU code runs inside the Main Thread (on the V8 Call Stack), physically occupying the only available thread and preventing it from doing anything else until finished.
+
