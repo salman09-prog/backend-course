@@ -1,0 +1,125 @@
+SECTION A — Concept Questions (6 total)
+
+2–3 lines each.
+
+Q1) What is the actual difference between a Domain and a Port?
+
+Explain in terms of who they help and when they matter.
+
+ANS = A Domain (like `google.com`) is for humans to find the correct computer (server) on the internet; it resolves to an IP address. A Port (like `80` or `3000`) is for the Operating System to find the specific program running inside that computer.
+ Analogy: The Domain is the Street Address of a building. The Port is the specific Apartment Number inside that building where the application lives.
+____________________________________________________________________________________________________
+
+Q2. Why does the browser ALWAYS send a GET request when you type a URL in the address bar?
+
+Explain the real reason, not “because that’s how browsers work.”
+
+ANS = Browsers are designed to be "User Agents" for retrieving information. When you type a URL, the browser's defined behavior is to "Get" (fetch) a resource to display it. It cannot send a POST request from the address bar because POST implies sending data (payload) to change the server's state, and a simple address bar input has no payload attached to it.
+___________________________________________________________________________________________________
+
+Q3. What is the purpose of HTTP status codes?
+
+Explain why the backend MUST send one.
+
+ANS = The backend must send a status code because the Browser is a machine, not a human. It cannot read text like "Page not found." It relies on standard numeric codes (like `200` or `404`) to programmatically decide what to do next (e.g., render the content, show a "broken page" icon, or redirect the user).
+___________________________________________________________________________________________________
+
+Q4. Why does the browser “keep loading forever” if you don’t call res.end()?
+
+Explain what is happening at the TCP level.
+
+ANS = HTTP is built on top of TCP (Transmission Control Protocol). When a request starts, a "pipe" (connection) is opened between the browser and server. If you don't call `res.end()`, the server never sends the "FIN" (Finish) packet. The browser assumes the server is still generating data and keeps the pipe open until it eventually hits a timeout error.
+___________________________________________________________________________________________________
+
+Q5. Why must routing ALWAYS check both req.method and req.url?
+
+Give a real example of a bug that would happen if you don’t.
+
+ANS = If you only check the URL (e.g., `/login`), you cannot distinguish between a user viewing the login form and submitting it.
+ The Bug: If you don't check the method, a user refreshing the page (a GET request) might accidentally trigger your database logic to create a new user (which should only happen on POST), leading to duplicate empty entries or crashes.
+____________________________________________________________________________________________________
+
+Q6. Explain the difference between Request Headers and Request Body.
+
+Why can’t you get POST data from headers?
+
+ANS = Headers are metadata (small key-value pairs) describing the request (e.g., "I am sending JSON," "I am Firefox"). The Body is the actual payload/content. You cannot put POST data in headers because headers have strict size limits (usually 8KB-16KB) and are parsed before the body is received.
+____________________________________________________________________________________________________
+
+---
+
+SECTION B — Practical Coding Reasoning (3 tasks)
+
+Write only explanations — no need to paste full code.
+
+Task 1 — Routing Logic
+
+Describe EXACTLY how you would route these in a raw Node server:
+
+GET /
+
+GET /about
+
+POST /login
+
+Explain the conditions your code checks.
+
+ANS = To route `GET /`, `GET /about`, and `POST /login` correctly, I would use a nested logical structure:
+1.  First Check: Look at `req.url`.
+2.  Second Check: Inside the URL block, look at `req.method`.
+     If URL is `/`: Check if method is GET. If yes, return Home.
+     If URL is `/about`: Check if method is GET. If yes, return About.
+     If URL is `/login`: Check if method is POST. If yes, run login logic. (If method is GET, perhaps show the login form).
+     Else: Return 404.
+___________________________________________________________________________________________________
+
+Task 2 — Body Parsing (manual)
+
+Explain step-by-step how to manually read JSON from a POST request using only the req stream.
+
+ANS = Node.js processes data in Streams (chunks), not all at once.
+1.  Initialize: Create an empty variable (e.g., `let body = ""`).
+2.  Listen to Data: Attach a callback to `req.on('data', chunk => { ... })`. As packets arrive from the internet, convert the binary chunk to a string and append it to your `body` variable.
+3.  Listen to End: Attach a callback to `req.on('end', () => { ... })`. This fires when the browser says "I'm done sending."
+4.  Parse: Inside the 'end' callback, your `body` variable is now complete. Run `JSON.parse(body)` to use it.
+___________________________________________________________________________________________________
+
+Task 3 — Error: ERR_HTTP_HEADERS_SENT
+
+Give the exact scenario that causes this error in a native Node server
+AND
+the correct fix.
+
+ANS = Scenario: This happens when you try to send a response (or write a header) after the response has already been finished.
+     Example: You call `res.end("Hello")` inside an `if` block, but the code continues running below the block and hits `res.end("Bye")` or `res.writeHead()` again.
+ The Fix: Always use `return res.end(...)` or use `if/else` structures to ensure the execution flow stops immediately after the response is sent.
+____________________________________________________________________________________________________
+
+---
+
+SECTION C — Brain Crushers (2)
+
+Short answers but very precise.
+
+Q7. Predict the output and explain:
+const http = require("http");
+
+http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end("A");
+  res.write("B");
+}).listen(3000);
+
+
+Explain EXACTLY why.
+
+ANS = Output: The server will crash/throw an error: `Error [ERR_STREAM_WRITE_AFTER_END]: write after end`.
+Explanation: `res.end("A")` signals to the browser and the OS that the communication is over and the connection should close. The subsequent line `res.write("B")` tries to push data into a closed stream, which is forbidden in Node.js.
+___________________________________________________________________________________________________
+
+Q8. Why can’t you reliably parse a POST body inside the createServer callback synchronously?
+
+Explain using Node’s stream model.
+
+ANS = Because Node.js is Non-Blocking. When the `createServer` callback triggers, it means the Request Headers have arrived, but the Request Body (the actual data) might still be traveling through the internet cables in packets.
+If you try to read the body synchronously (immediately), the variable will be empty or undefined. You must wait for the asynchronous `data` events to fire as the packets arrive.
