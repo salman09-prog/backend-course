@@ -1,0 +1,115 @@
+Here are the deep-dive solutions for your Friday Test. I have written these answers with the same "behind-the-scenes" depth we discussed, ensuring you understand the why and the internal mechanics, not just the syntax.
+
+-----
+
+### SECTION A — Concept Questions
+
+Q1. Why did the raw Node.js HTTP server become “unmaintainable” once the application grew?
+The raw Node.js server becomes unmaintainable because it forces you to handle routing using a single, giant `if-else` or `switch` block inside one request listener function. As your app grows to 50 or 100 routes, this function becomes thousands of lines long. Furthermore, you have to manually parse URL strings (to separate queries from paths) and manually handle data streams for every POST request, leading to repetitive, error-prone boilerplate code rather than focusing on business logic.
+
+Q2. Express is described as “Declarative,” while raw Node is “Imperative.” Explain.
+
+   Imperative (Raw Node): You have to tell the computer how to do everything step-by-step. You must manually check the URL, then check the method, then set the status code, then write the headers, and finally write the response.
+   Declarative (Express): You simply tell the computer what you want to happen. You declare a route and a handler, and the framework handles the "how" (the underlying stream and header logic).
+   Example:
+       Imperative: "Check if url is '/home'. If yes, check if method is GET. If yes, write header 200. Write 'Hello'."
+       Declarative: `app.get('/home', handler)` (Hey Express, just handle GET requests to /home for me).
+
+Q3. What EXACT problem does Express solve with “Body Parsing”?
+Node.js treats incoming request data as a Stream (continuous chunks of binary data), not a ready-to-use object.
+
+   Node's Default Behavior: Forced you to listen for the `data` event (to collect chunks), buffer them, concatenate them, and then listen for the `end` event to finally turn that buffer into a string and parse it as JSON.
+   Express Solution: The `express.json()` middleware abstracts this entire buffering process. It automatically collects the chunks, runs `JSON.parse()` internally, and attaches the resulting JavaScript object to `req.body`, so you can use it immediately.
+
+Q4. Why is Express called “Unopinionated”?
+"Unopinionated" means Express does not force you to use a specific architecture or set of tools. It gives you the server, but it doesn't care if you use MongoDB or SQL, it doesn't force a specific folder structure (like MVC), and it doesn't force a template engine.
+
+   Advantage: This allows a backend team to architect the software exactly how they need it—whether it's a massive monolithic enterprise app or a tiny microservice. You have total freedom.
+
+Q5. Semantic Versioning (`"express": "^4.21.1"`)
+The carat `^` symbol means "Compatible with version 4.21.1". It allows updates that do not change the leftmost non-zero digit (the Major version).
+
+1.  Update available: 4.21.5 -\> UPDATE. This is a Patch update (bug fixes). It is safe.
+2.  Update available: 4.25.0 -\> UPDATE. This is a Minor update (new features, backward compatible). It is safe.
+3.  Update available: 5.0.0 -\> BLOCK. This is a Major update. It likely contains breaking changes that would crash your current code. `^4` prevents upgrading to `5`.
+
+Q6. What is the MAIN reason REST APIs must be stateless?
+The main reason is Horizontal Scaling.
+In a real-world scenario, you don't have one server; you have a cluster of servers (A, B, C) behind a Load Balancer.
+
+   If User 1 logs into Server A and Server A stores their session in its RAM (Stateful), and the next request is routed by the Load Balancer to Server B, Server B will not know who the user is (because it doesn't have Server A's RAM).
+   By being Stateless, the user carries their own state (token), so Server A, B, or C can all verify the token independently without needing shared memory.
+
+Q7. Is this RESTful or NOT RESTful?
+
+   `GET /createUser` -\> NOT RESTful. GET is for retrieving data. "create" is a verb in the URL.
+       Fix: `POST /users`
+   `POST /delete-item` -\> NOT RESTful. POST is for creating. "delete-item" is a verb.
+       Fix: `DELETE /items/:id`
+   `GET /users/getAll` -\> NOT RESTful. "getAll" is a verb. The plural noun "users" implies a collection.
+       Fix: `GET /users`
+
+-----
+
+### SECTION B — Practical Coding Reasoning
+
+Task 1 — Folder Structure Reasoning
+Writing everything in `index.js` creates a "God Object" file that is impossible to read or debug. We separate them for Separation of Concerns:
+
+1.  `/routes`: The Traffic Cop. It only cares about URLs and forwarding requests to the right controller. It should not contain business logic.
+2.  `/controllers`: The Chef. It contains the business logic. It takes the request, decides what to do (validate, calculate), and sends the response.
+3.  `/data` (or Models): The Warehouse. It strictly handles database interactions (Schema definitions, DB queries).
+4.  `/utils`: The Toolkit. Contains reusable helper functions (e.g., date formatting, error handling) that don't belong to any specific feature.
+
+Task 2 — Convert Raw Node Routing to Express
+
+```javascript
+// Express handles the method check (get) and path check (/products) automatically
+app.get('/products', (req, res) => {
+    // res.json sets the Content-Type header to application/json automatically
+    res.json({ message: "All products" });
+});
+```
+
+Task 3 — Express Controller Logic
+
+```javascript
+const createTweet = (req, res) => {
+    // 1. Destructure data from the body (parsed by middleware)
+    const { tweetText } = req.body;
+
+    // (Optional but good practice: validation)
+    if(!tweetText) return res.status(400).json({ success: false, message: "Text required"});
+
+    // 2. Send status 201 (Created) and the JSON response
+    res.status(201).json({
+        success: true,
+        message: "Tweet created"
+    });
+};
+```
+
+-----
+
+### SECTION C — Brain Crushers
+
+Q8. Predict the output + explain the behavior:
+
+   Output: The client receives "A". The server crashes (or throws an error) on the console: `Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client`.
+   Reason: HTTP works on a strict Request-Response cycle. Once `res.send("A")` is executed, the response headers and body are fired off to the client, and the connection is technically closed/handed over. You cannot write to a response that has already been finished.
+
+Q9. Explain the exact internal reason why POST requests break without `app.use(express.json())`.
+Internally, `req.body` is undefined by default in Express.
+Without `express.json()`, the request stream (the raw bits of data coming over the network) is never processed. The stream hits your controller, but your controller is looking for a JavaScript object in `req.body`. Since the stream was never intercepted, collected, and parsed into an object, `req.body` remains undefined, and trying to access `req.body.text` will likely throw an error or return `undefined`.
+
+Q10. Is this API design RESTful? (Hard)
+
+   `PUT /users/create` -\> NO.
+       Reason: `PUT` is used for replacing/updating an existing resource, not creating a new one (usually). Also, `create` is a verb in the URL.
+       Fix: `POST /users`
+   `PATCH /deleteUser` -\> NO.
+       Reason: `PATCH` is for partial updates (e.g., changing just a password). It is not for deleting. `deleteUser` is a verb.
+       Fix: `DELETE /users/:id`
+   `DELETE /users?id=10` -\> NO (Debatable, but bad practice).
+       Reason: While technically valid HTTP, standard REST principles state that specific resources should be identified by Path Parameters (part of the URL hierarchy), not Query Parameters (which are usually for filtering/sorting).
+       Fix: `DELETE /users/10`
